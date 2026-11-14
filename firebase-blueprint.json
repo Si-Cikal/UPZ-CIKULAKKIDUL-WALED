@@ -1,0 +1,227 @@
+{
+  "entities": {
+    "AmilProfile": {
+      "title": "AmilProfile",
+      "description": "Profil petugas amil UPZ Desa Cikulak Kidul dan target pengumpulan zakat desa.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID Firebase Auth pemilik profil amil."
+        },
+        "namaPetugas": {
+          "type": "string",
+          "description": "Nama lengkap petugas amil UPZ."
+        },
+        "jabatan": {
+          "type": "string",
+          "description": "Jabatan di struktur UPZ Desa Cikulak Kidul."
+        },
+        "dusun": {
+          "type": "string",
+          "description": "Wilayah dusun tugas di Desa Cikulak Kidul."
+        },
+        "desa": {
+          "type": "string",
+          "description": "Identitas wilayah desa (Desa Cikulak Kidul, Kec. Waled, Kab. Cirebon)."
+        },
+        "targetFitrahBerasKg": {
+          "type": "number",
+          "description": "Target pengumpulan beras zakat fitrah dalam kilogram."
+        },
+        "targetZakatUang": {
+          "type": "integer",
+          "description": "Target pengumpulan dana ZIS (Zakat, Infak, Sedekah) dalam Rupiah."
+        },
+        "hargaBerasPerKg": {
+          "type": "integer",
+          "description": "Standar harga beras lokal Desa Cikulak Kidul per kilogram untuk konversi zakat fitrah."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembuatan profil (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan terakhir (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "namaPetugas",
+        "jabatan",
+        "dusun",
+        "desa",
+        "targetFitrahBerasKg",
+        "targetZakatUang",
+        "hargaBerasPerKg",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ZakatTransaction": {
+      "title": "ZakatTransaction",
+      "description": "Catatan penerimaan zakat fitrah, zakat mal, infak/sedekah, dan fidyah dari muzakki.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID petugas amil pencatat transaksi."
+        },
+        "nomorKwitansi": {
+          "type": "string",
+          "description": "Nomor bukti setor / kwitansi resmi UPZ Desa Cikulak Kidul."
+        },
+        "namaMuzakki": {
+          "type": "string",
+          "description": "Nama pembayar zakat (muzakki) atau kepala keluarga."
+        },
+        "rtRw": {
+          "type": "string",
+          "description": "Alamat RT/RW dan Dusun muzakki di Desa Cikulak Kidul."
+        },
+        "jenisZakat": {
+          "type": "string",
+          "enum": ["fitrah_uang", "fitrah_beras", "mal", "infak_sedekah", "fidyah"],
+          "description": "Kategori jenis penghimpunan ZIS."
+        },
+        "jumlahJiwa": {
+          "type": "integer",
+          "description": "Jumlah jiwa yang ditanggung untuk zakat fitrah atau fidyah."
+        },
+        "nominalUang": {
+          "type": "integer",
+          "description": "Nominal uang yang diterima dalam Rupiah."
+        },
+        "beratBerasKg": {
+          "type": "number",
+          "description": "Berat beras zakat yang diterima dalam kilogram."
+        },
+        "metodePembayaran": {
+          "type": "string",
+          "enum": ["tunai", "beras", "transfer"],
+          "description": "Metode pembayaran yang digunakan muzakki."
+        },
+        "catatan": {
+          "type": "string",
+          "description": "Keterangan tambahan transaksi."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["tercatat", "terverifikasi"],
+          "description": "Status verifikasi kwitansi transaksi."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pencatatan server (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan server (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "nomorKwitansi",
+        "namaMuzakki",
+        "rtRw",
+        "jenisZakat",
+        "jumlahJiwa",
+        "nominalUang",
+        "beratBerasKg",
+        "metodePembayaran",
+        "catatan",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MustahikRecord": {
+      "title": "MustahikRecord",
+      "description": "Data penerima manfaat zakat (8 golongan asnaf) dan status penyaluran di Desa Cikulak Kidul.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID petugas amil pengelola data mustahik."
+        },
+        "namaMustahik": {
+          "type": "string",
+          "description": "Nama lengkap penerima zakat (mustahik)."
+        },
+        "golonganAsnaf": {
+          "type": "string",
+          "enum": ["fakir", "miskin", "amil", "muallaf", "riqab", "gharimin", "fisabilillah", "ibnu_sabil"],
+          "description": "Kategori 8 golongan asnaf sesuai syariat."
+        },
+        "rtRw": {
+          "type": "string",
+          "description": "Alamat RT/RW dan Dusun domisili mustahik."
+        },
+        "statusPenyaluran": {
+          "type": "string",
+          "enum": ["terdaftar", "disalurkan"],
+          "description": "Status penyaluran bantuan zakat."
+        },
+        "bantuanUang": {
+          "type": "integer",
+          "description": "Nominal santunan uang yang disalurkan dalam Rupiah."
+        },
+        "bantuanBerasKg": {
+          "type": "number",
+          "description": "Berat bantuan beras yang disalurkan dalam kilogram."
+        },
+        "catatan": {
+          "type": "string",
+          "description": "Keterangan kondisi atau penyaluran."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pendaftaran mustahik (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan data mustahik (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "namaMustahik",
+        "golonganAsnaf",
+        "rtRw",
+        "statusPenyaluran",
+        "bantuanUang",
+        "bantuanBerasKg",
+        "catatan",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/AmilProfile"
+      },
+      "description": "Profil petugas amil UPZ Desa Cikulak Kidul beserta target penghimpunan dan standar harga beras."
+    },
+    "/users/{userId}/zakat_transactions/{txId}": {
+      "schema": {
+        "$ref": "#/entities/ZakatTransaction"
+      },
+      "description": "Subkoleksi transaksi penghimpunan zakat, infak, sedekah, dan fidyah milik petugas amil."
+    },
+    "/users/{userId}/mustahik/{mustahikId}": {
+      "schema": {
+        "$ref": "#/entities/MustahikRecord"
+      },
+      "description": "Subkoleksi daftar mustahik dan catatan penyaluran bantuan zakat."
+    }
+  }
+}

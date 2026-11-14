@@ -1,0 +1,6 @@
+{
+  "name": "UPZ Cikulak",
+  "description": "Aplikasi Unit Pengumpul Zakat (UPZ) Desa Cikulak Kidul, Kec. Waled, Kab. Cirebon dengan halaman login, dashboard analitik, pencatatan muzakki, penyaluran mustahik, dan kalkulator zakat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

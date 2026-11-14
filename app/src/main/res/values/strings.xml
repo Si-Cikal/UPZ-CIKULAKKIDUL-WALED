@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">UPZ Cikulak</string>
+    <string name="upz_full_title">UPZ Desa Cikulak Kidul</string>
+    <string name="upz_location_subtitle">Kec. Waled, Kab. Cirebon • Jawa Barat</string>
+    <string name="login_badge">UNIT PENGUMPUL ZAKAT RESMI</string>
+    <string name="login_headline">Kelola Amanah Zakat Desa Secara Profesional &amp; Transparan</string>
+    <string name="login_subheadline">Platform terpadu pencatatan Muzakki, Zakat Fitrah, Zakat Mal, Infak, serta penyaluran 8 Asnaf warga Desa Cikulak Kidul.</string>
+    <string name="login_google_cta">Masuk dengan Akun Google</string>
+    <string name="login_google_loading">Memverifikasi Akun…</string>
+    <string name="login_security_note">Terlindungi Firebase Authentication &amp; Cloud Firestore. Seluruh data tersinkronisasi aman per petugas amil resmi.</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_penerimaan">Penerimaan</string>
+    <string name="nav_mustahik">Mustahik</string>
+    <string name="nav_kalkulator">Kalkulator</string>
+    <string name="action_sign_out">Keluar Akun</string>
+    <string name="action_add_zakat">Catat Zakat</string>
+    <string name="action_add_mustahik">Tambah Mustahik</string>
+</resources>

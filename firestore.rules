@@ -1,0 +1,219 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny all unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Security Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Schema Validation Helpers ---
+    function isValidAmilProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.namaPetugas is string && data.namaPetugas.size() >= 2 && data.namaPetugas.size() <= 80 &&
+             data.jabatan is string && data.jabatan.size() >= 2 && data.jabatan.size() <= 60 &&
+             data.dusun is string && data.dusun.size() >= 2 && data.dusun.size() <= 60 &&
+             data.desa is string && data.desa.size() >= 2 && data.desa.size() <= 120 &&
+             data.targetFitrahBerasKg is number && data.targetFitrahBerasKg >= 0 && data.targetFitrahBerasKg <= 1000000 &&
+             data.targetZakatUang is int && data.targetZakatUang >= 0 && data.targetZakatUang <= 100000000000 &&
+             data.hargaBerasPerKg is int && data.hargaBerasPerKg >= 1000 && data.hargaBerasPerKg <= 500000;
+    }
+
+    function isValidZakatTransaction(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.nomorKwitansi is string && data.nomorKwitansi.size() >= 3 && data.nomorKwitansi.size() <= 40 &&
+             data.namaMuzakki is string && data.namaMuzakki.size() >= 2 && data.namaMuzakki.size() <= 100 &&
+             data.rtRw is string && data.rtRw.size() >= 2 && data.rtRw.size() <= 60 &&
+             data.jenisZakat in ['fitrah_uang', 'fitrah_beras', 'mal', 'infak_sedekah', 'fidyah'] &&
+             data.jumlahJiwa is int && data.jumlahJiwa >= 0 && data.jumlahJiwa <= 100 &&
+             data.nominalUang is int && data.nominalUang >= 0 && data.nominalUang <= 100000000000 &&
+             data.beratBerasKg is number && data.beratBerasKg >= 0 && data.beratBerasKg <= 100000 &&
+             data.metodePembayaran in ['tunai', 'beras', 'transfer'] &&
+             data.catatan is string && data.catatan.size() <= 250 &&
+             data.status in ['tercatat', 'terverifikasi'];
+    }
+
+    function isValidMustahikRecord(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.namaMustahik is string && data.namaMustahik.size() >= 2 && data.namaMustahik.size() <= 100 &&
+             data.golonganAsnaf in ['fakir', 'miskin', 'amil', 'muallaf', 'riqab', 'gharimin', 'fisabilillah', 'ibnu_sabil'] &&
+             data.rtRw is string && data.rtRw.size() >= 2 && data.rtRw.size() <= 60 &&
+             data.statusPenyaluran in ['terdaftar', 'disalurkan'] &&
+             data.bantuanUang is int && data.bantuanUang >= 0 && data.bantuanUang <= 100000000000 &&
+             data.bantuanBerasKg is number && data.bantuanBerasKg >= 0 && data.bantuanBerasKg <= 10000 &&
+             data.catatan is string && data.catatan.size() <= 250;
+    }
+
+    // --- Collection Rules ---
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if false;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'namaPetugas', 'jabatan', 'dusun', 'desa',
+                         'targetFitrahBerasKg', 'targetZakatUang', 'hargaBerasPerKg',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'namaPetugas', 'jabatan', 'dusun', 'desa',
+                         'targetFitrahBerasKg', 'targetZakatUang', 'hargaBerasPerKg',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidAmilProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidAmilProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'namaPetugas', 'jabatan', 'dusun', 'desa',
+                         'targetFitrahBerasKg', 'targetZakatUang', 'hargaBerasPerKg',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+      match /zakat_transactions/{txId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(txId) && request.auth.uid == userId;
+        allow list: if isSignedIn() && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(txId) &&
+                         request.auth.uid == userId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().status == 'tercatat' &&
+                         incoming().keys().hasAll([
+                           'userId', 'nomorKwitansi', 'namaMuzakki', 'rtRw',
+                           'jenisZakat', 'jumlahJiwa', 'nominalUang', 'beratBerasKg',
+                           'metodePembayaran', 'catatan', 'status', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'nomorKwitansi', 'namaMuzakki', 'rtRw',
+                           'jenisZakat', 'jumlahJiwa', 'nominalUang', 'beratBerasKg',
+                           'metodePembayaran', 'catatan', 'status', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         isValidZakatTransaction(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(txId) &&
+                         request.auth.uid == userId &&
+                         isValidZakatTransaction(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         existing().status == 'tercatat' &&
+                         (
+                           // Action: Edit unverified transaction details
+                           (
+                             incoming().status == 'tercatat' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'nomorKwitansi', 'namaMuzakki', 'rtRw',
+                               'jenisZakat', 'jumlahJiwa', 'nominalUang', 'beratBerasKg',
+                               'metodePembayaran', 'catatan', 'updatedAt'
+                             ])
+                           ) ||
+                           // Action: Verify transaction (terminal state lock)
+                           (
+                             incoming().status == 'terverifikasi' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+                           )
+                         );
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(txId) && request.auth.uid == userId;
+      }
+
+      match /mustahik/{mustahikId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(mustahikId) && request.auth.uid == userId;
+        allow list: if isSignedIn() && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(mustahikId) &&
+                         request.auth.uid == userId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().statusPenyaluran == 'terdaftar' &&
+                         incoming().keys().hasAll([
+                           'userId', 'namaMustahik', 'golonganAsnaf', 'rtRw',
+                           'statusPenyaluran', 'bantuanUang', 'bantuanBerasKg',
+                           'catatan', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'namaMustahik', 'golonganAsnaf', 'rtRw',
+                           'statusPenyaluran', 'bantuanUang', 'bantuanBerasKg',
+                           'catatan', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         isValidMustahikRecord(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(mustahikId) &&
+                         request.auth.uid == userId &&
+                         isValidMustahikRecord(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         existing().statusPenyaluran == 'terdaftar' &&
+                         (
+                           // Action: Edit mustahik details while registered
+                           (
+                             incoming().statusPenyaluran == 'terdaftar' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'namaMustahik', 'golonganAsnaf', 'rtRw',
+                               'bantuanUang', 'bantuanBerasKg', 'catatan', 'updatedAt'
+                             ])
+                           ) ||
+                           // Action: Mark as distributed (terminal state lock)
+                           (
+                             incoming().statusPenyaluran == 'disalurkan' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'statusPenyaluran', 'bantuanUang', 'bantuanBerasKg', 'catatan', 'updatedAt'
+                             ])
+                           )
+                         );
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(mustahikId) && request.auth.uid == userId;
+      }
+    }
+  }
+}
